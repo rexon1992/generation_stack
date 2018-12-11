@@ -22,36 +22,36 @@ comments in the code.
     {
       data<-matrix(ncol = 3)
       colnames(data)<-c("bid_price","bid_cap","bids")
-
+      
       #Filtering the data by hour
-
+      
       sced_hour<-filter(sced_data,hour(Time)==hour)
-
+      
       for (gen in unique(sced_hour$Resource.Name))
       {
         #Filtering the hourly data by generator and segregating the price and generation in separate columns
-
+        
         temp<-filter(sced_hour, Resource.Name==gen)
-
-
+        
+        
         bid_cap<-temp[,grep("MW",colnames(temp))]
         bid_price<-temp[,grep("Price", colnames(temp))]
-
+        
         data_temp<-data.frame(bid_price=t(bid_price),bid_cap=t(bid_cap))
-
+        
         data_temp<-data_temp[which(data_temp$bid_cap>0),]
-
+        
         #Calculating the generation in particular hour for every bid by each generator
-
+        
         data_temp$bids<-c(data_temp$bid_cap[1],diff(as.numeric(data_temp$bid_cap)))
         data<-rbind(data,data_temp)
       }
-
+      
       data<-data[-1,]
       row.names(data)<-c(1:nrow(data))
-
+      
       #Stacking the generation bids in increasing order of the bid price (marginal cost) to build a supply curve (generation stack) in that hour
-
+      
       data_order<-data[order(data$bid_price),c(1,2,3)]
       data_order<-data_order[which(data_order$bids>0),]
       temp_bid_data=NULL
@@ -64,9 +64,9 @@ comments in the code.
       }
       temp_bid_data<-as.data.frame(cbind(temp_bid_data,cumsum(temp_bid_data[,2])))
       colnames(temp_bid_data)<-c("bp","cap","cumcap")
-
+      
       #Estimating the clearing price in a particular hour which is the bid price (marginal cost) of the generator on the margin of the bin where demand curve meets the supply curve
-
+      
       demand<-demand_data$Demand[which(hour(demand_data$Time)==hour)]
       clearing_price<-temp_bid_data$bp[min(which(temp_bid_data$cumcap>demand))]
       cp_row<-c(as.character(demand_data$Time[which(hour(demand_data$Time)==hour)]),max(temp_bid_data$cumcap), clearing_price)
@@ -118,7 +118,7 @@ Generation Capacity (GW) for reference.
 
 ### Visualization
 
-<img src="img_1.png"></img>
+![](generation_stack_model_files/figure-markdown_strict/unnamed-chunk-2-1.png)
 
 The above figure shows the marginal clearing price ($) and the hourly
 demand (MW) for reference. The marginal clearing price follows the same
